@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  sharding-sphere:
+    datasource:
+      names: ds,ds0,ds1
+      ds:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://127.0.0.1:3306/test_db_sharding?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&characterEncoding=utf8
+        username: root
+        password: root
+      ds0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://127.0.0.1:3306/test_db_sharding_0?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&characterEncoding=utf8
+        username: root
+        password: root
+      ds1:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        jdbc-url: jdbc:mysql://127.0.0.1:3306/test_db_sharding_1?allowPublicKeyRetrieval=true&useSSL=false&autoReconnect=true&characterEncoding=utf8
+        username: root
+        password: root
+    rules:
+      sharding:
+        default-data-source-name: ds
+  #      default-database-strategy:
+  #        inline:
+  #          sharding-column: u_id
+  #          algorithm-expression: ds$->{u_id % 2}
+        tables:
+          user_activity:
+            actual-data-nodes: ds$->{0..1}.user_activity_$->{0..1}
+            database-strategy:
+              standard:
+                sharding-column: u_id
+                sharding-algorithm-name: user-activity-database-inline
+            table-strategy:
+              standard:
+                sharding-column: u_id
+                sharding-algorithm-name: user-activity-table-inline
+        sharding-algorithms:
+          user-activity-database-inline:
+            type: inline
+            props:
+              algorithm-expression: ds$->{u_id % 2}
+          user-activity-table-inline:
+            type: INLINE
+            props:
+              algorithm-expression: user_activity_$->{u_id % 2}
+    #          key-generator:
+  #            column: activity_id
+  #            type: SNOWFLAKE
+  #            props:
+  #              worker:
+  #                id: 1
+#        binding-tables: user_activity
+    props:
+      sql-show: true
+
+mybatis-plus:
+  global-config:
+    db-config:
+      id-type: input
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #开启sql日志
+    map-underscore-to-camel-case: true
+
+knife4j:
+  enable: true
+  setting:
+    # default lang
+    language: zh-CN
+    # footer
+    enableFooter: false
+    enableFooterCustom: true
+    footerCustomContent: My Space
+    # models
+    enableSwaggerModels: true
+    swaggerModelName: My Models
